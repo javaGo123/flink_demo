@@ -1,0 +1,144 @@
+syntax = "proto3";
+
+import "gitlab.sz.sensetime.com/viper/commonapis/pb/commonapis.proto";
+import "gitlab.sz.sensetime.com/viper/engine-image-process-service/pb/engine-image-process-service.proto";
+
+option go_package="gitlab.sz.sensetime.com/plutus/plutus-public-apis/api/commonapis";
+option java_package="com.sensetime.plutus.commonapis";
+package sensetime.plutus.commonapis;
+
+// PLUTUS平台支持物体对象类型.
+// ObjectType与字符串表示的标准映射如下见对应枚举项注释.
+enum ObjectType {
+	// unknown. 未知.
+	OBJECT_UNKNOWN = 0;
+	// face. 人脸.
+	OBJECT_FACE = 1;
+	// cash. 现金，复数形式.
+	OBJECT_CASHES = 2;
+	// casino chips. 赌场筹码堆，复数形式.
+	OBJECT_CASINO_CHIPS = 3;
+	// player card. 扑克牌.
+	OBJECT_POKER = 4;
+	// game marker. 游戏指示牌.
+	OBJECT_GAME_MARKER = 5;
+	// hand. 人手.
+	OBJECT_HAND = 6;
+}
+
+message Location {
+	// 边界框位置，包含左上角和右下角的坐标.
+	viper.commonapis.BoundingPoly bounding = 1;
+	// 抓拍图中心对全景大图的位置.
+	viper.commonapis.Vertex center = 2;
+}
+
+message ObjectAnnotation {
+	// 目标类型.
+	ObjectType type = 1;
+
+	// 人脸信息.
+	FaceAnnotation face = 2;
+
+	// 现金信息.
+	CashesAnnotation cashes = 3;
+
+	// 赌场筹码堆信息.
+	CasinoChipsAnnotation casino_chips = 4;
+
+	// 扑克牌信息.
+	PokerAnnotation poker = 5;
+
+	// 游戏指示牌信息.
+	GameMarkerAnnotation game_marker = 6;
+
+	// 人手信息.
+	HandAnnotation hand = 7;
+
+	// 质量.
+	float quality = 100;
+
+	// 标准坐标系之下的物体坐标.
+	Location location = 101;
+
+	// 跟踪id.
+	int64 track_id = 102;
+
+	// 全局唯一对象ID, 同一个对象的多个部分(如人脸和对应的行人)
+	// 并且在同一个跟踪过程的不同图片, 共享同一个object_id.
+	//
+	// 对于赌桌场景来说, 该字段用于表示物体与人脸的关联关系，代表物体关联上的人脸track id
+	// 当该字段为空，代表物体没有关联上任何人脸
+	// 当该字段为-1，代表物体关联上荷官的人脸.
+	string object_id = 103;
+}
+
+message FaceAnnotation {
+	// 人脸角度信息.
+	viper.commonapis.Angle angle = 1;
+	// 人脸属性信息, 带属性分数.
+	map<string, viper.image_process.AttributeWithScore> attributes = 2;
+}
+
+message CashAnnotation{
+	// 现金面值.
+	string cash_value = 1;
+	// 面值置信度.
+	float value_confidence = 2;
+	// 币种. TODO: use enum type
+	string currency = 3;
+	// 币种置信度.
+	float currency_confidence = 4;
+}
+
+message CashesAnnotation {
+	// 现金序列.
+	repeated CashAnnotation cashes = 1;
+}
+
+message CasinoChipAnnotation {
+	// 筹码面值.
+	string chip_value = 1;
+	// 面值置信度.
+	float value_confidence = 2;
+	// 筹码类别.
+	string chip_type = 3;
+	// 筹码类别置信度.
+	float  type_confidence = 4;
+}
+
+message CasinoChipsAnnotation {
+	// 筹码序列.
+	repeated CasinoChipAnnotation casino_chips = 1;
+	// 筹码堆的摆放形态, 如果为true代表筹码堆是站立形态.
+	bool is_chip_standing = 2;
+}
+
+message PokerAnnotation {
+	// 扑克面值.
+	string poker_value = 1;
+	// 面值置信度.
+	float value_confidence = 2;
+	// 扑克花色,spade,heart,diamond,club.
+	string poker_suit = 3;
+	// 花色置信度.
+	float suit_confidence = 4;
+	// 扑克种类.
+	string poker_type = 5;
+	// 种类置信度.
+	float type_confidence = 6;
+}
+
+message GameMarkerAnnotation {
+	// 游戏指示牌类型.
+	string marker_type = 1;
+	// 类型置信度.
+	float type_confidence = 2;
+}
+
+message HandAnnotation {
+	// 人手类型
+	string hand_type = 1;
+	// 类型置信度.
+	float type_confidence = 2;
+}
